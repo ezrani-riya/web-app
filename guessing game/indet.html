@@ -1,0 +1,2443 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Number Guesser</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --text-color: #333;
+            --bg-color: #f5f5f5;
+            --container-bg: #fff;
+            --border-color: #ddd;
+            --panel-bg: #f8f9fa;
+        }
+
+        .dark-mode {
+            --bg-color: #121212;
+            --text-color: #f5f5f5;
+            --container-bg: #1e1e1e;
+            --primary-color: #2980b9;
+            --border-color: #444;
+            --panel-bg: #2d2d2d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Auth Modal */
+        .auth-modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background-color: var(--container-bg);
+            border-radius: 10px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .close-auth {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+
+        .auth-tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: bold;
+        }
+
+        .auth-content {
+            display: none;
+        }
+
+        .auth-content.active {
+            display: block;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .auth-form input {
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+        }
+
+        .auth-form button {
+            padding: 12px;
+            border-radius: 5px;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .auth-footer {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .auth-footer a {
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* Avatar Selection */
+        .avatar-selection {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .avatar-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            background-color: var(--panel-bg);
+        }
+
+        .avatar-option.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.2);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background-color: var(--success-color);
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            display: none;
+            max-width: 80%;
+        }
+
+        /* Header Styles */
+        .app-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .user-info {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: white;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .coins-display {
+            background-color: rgba(0,0,0,0.2);
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 15px;
+        }
+
+        /* Tab Navigation */
+        .tab-container {
+            display: flex;
+            background-color: var(--primary-color);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .tab-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            padding: 12px 15px;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            flex: 1;
+            min-width: 80px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tab.active {
+            border-bottom-color: white;
+            background-color: var(--secondary-color);
+        }
+
+        .tab i {
+            font-size: 18px;
+        }
+
+        /* Game Panel Styles */
+        .game-panel {
+            background-color: var(--container-bg);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .panel-title {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        /* Difficulty Selector */
+        .difficulty-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .difficulty-btn {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .difficulty-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Game Controls */
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        #guess-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+        }
+
+        .btn {
+            padding: 12px 15px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+
+        /* Feedback Area */
+        .feedback {
+            padding: 15px;
+            border-radius: 5px;
+            background-color: var(--panel-bg);
+            margin: 15px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Number Line */
+        .number-line-container {
+            margin: 15px 0;
+        }
+
+        .number-line {
+            width: 100%;
+            height: 30px;
+            background-color: var(--panel-bg);
+            position: relative;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .range-indicator {
+            position: absolute;
+            height: 100%;
+            background-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .target-marker {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background-color: var(--error-color);
+            display: none;
+        }
+
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+
+        /* Guess History */
+        .guess-history {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .guess-item {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-item {
+            background-color: var(--panel-bg);
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* Powerups */
+        .powerups {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .powerup-btn {
+            padding: 10px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        /* Profile Section */
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        /* Friends List */
+        .friends-list {
+            margin-top: 15px;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .friend-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        /* Daily Rewards */
+        .rewards-calendar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .reward-day {
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .reward-day.claimed {
+            background-color: rgba(39, 174, 96, 0.2);
+            border-color: var(--success-color);
+        }
+
+        .reward-day.today {
+            border: 2px solid var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* Achievements */
+        .achievement {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .achievement.unlocked {
+            background-color: rgba(39, 174, 96, 0.1);
+        }
+
+        .achievement-icon {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+
+        /* Leaderboard */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .leaderboard-table th, 
+        .leaderboard-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Settings */
+        .settings-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+        }
+
+        .setting-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Sound Options */
+        .sound-options {
+            margin-top: 15px;
+        }
+
+        .sound-option {
+            margin-bottom: 15px;
+        }
+
+        .sound-option label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .sound-selector {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .sound-selector select {
+            flex: 1;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+        }
+
+        .preview-sound {
+            padding: 8px 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 400px) {
+            .difficulty-buttons, .powerups {
+                grid-template-columns: 1fr;
+            }
+            
+            .tab {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+            
+            .tab i {
+                font-size: 16px;
+            }
+
+            .rewards-calendar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .avatar-selection {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-content {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Hide all tab contents by default */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Modal -->
+    <div class="auth-modal" id="auth-modal">
+        <div class="auth-container">
+            <span class="close-auth" id="close-auth">&times;</span>
+            <h2 style="text-align: center; margin-bottom: 20px;">Number Guesser</h2>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-auth-tab="login">Login</div>
+                <div class="auth-tab" data-auth-tab="signup">Sign Up</div>
+            </div>
+            
+            <!-- Login Form -->
+            <div class="auth-content active" id="login-content">
+                <form class="auth-form" id="login-form">
+                    <input type="text" id="login-username" placeholder="Username" required>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+                <div class="auth-footer">
+                    Don't have an account? <a id="show-signup">Sign up</a>
+                </div>
+            </div>
+            
+            <!-- Signup Form -->
+            <div class="auth-content" id="signup-content">
+                <form class="auth-form" id="signup-form">
+                    <input type="text" id="signup-username" placeholder="Username" required>
+                    <input type="password" id="signup-password" placeholder="Password" required>
+                    <input type="password" id="signup-confirm" placeholder="Confirm Password" required>
+                    
+                    <div class="setting-group" style="margin-top: 10px;">
+                        <div class="setting-title">Select Avatar</div>
+                        <div class="avatar-selection" id="avatar-selection">
+                            <div class="avatar-option" data-avatar="1">😀</div>
+                            <div class="avatar-option" data-avatar="2">😎</div>
+                            <div class="avatar-option" data-avatar="3">🧙</div>
+                            <div class="avatar-option" data-avatar="4">🦸</div>
+                            <div class="avatar-option" data-avatar="5">👽</div>
+                            <div class="avatar-option" data-avatar="6">🐶</div>
+                            <div class="avatar-option" data-avatar="7">🦊</div>
+                            <div class="avatar-option" data-avatar="8">🐵</div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="margin-top: 15px;">Create Account</button>
+                </form>
+                <div class="auth-footer">
+                    Already have an account? <a id="show-login">Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+    
+    <!-- App Container (shown after login) -->
+    <div class="app-container" id="app-container" style="display: none;">
+        <!-- App Header -->
+        <header class="app-header">
+            <div class="app-title">Number Guesser</div>
+            <div class="user-info">
+                <div class="coins-display">
+                    <i class="fas fa-coins"></i>
+                    <span id="header-coins">0</span>
+                </div>
+                <div class="user-avatar" id="header-avatar">U</div>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-container">
+            <div class="tab active" data-tab="game">
+                <i class="fas fa-gamepad"></i>
+                <span>Game</span>
+            </div>
+            <div class="tab" data-tab="profile">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </div>
+            <div class="tab" data-tab="friends">
+                <i class="fas fa-users"></i>
+                <span>Friends</span>
+            </div>
+            <div class="tab" data-tab="rewards">
+                <i class="fas fa-gift"></i>
+                <span>Rewards</span>
+            </div>
+            <div class="tab" data-tab="achievements">
+                <i class="fas fa-trophy"></i>
+                <span>Achievements</span>
+            </div>
+            <div class="tab" data-tab="leaderboard">
+                <i class="fas fa-medal"></i>
+                <span>Leaderboard</span>
+            </div>
+            <div class="tab" data-tab="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Game Tab -->
+            <div class="tab-content active" id="game-tab">
+                <div class="game-panel">
+                    <h3 class="panel-title">Select Difficulty</h3>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn active" data-difficulty="easy">Easy (1-50)</button>
+                        <button class="difficulty-btn" data-difficulty="medium">Medium (1-100)</button>
+                        <button class="difficulty-btn" data-difficulty="hard">Hard (1-200)</button>
+                        <button class="difficulty-btn" data-difficulty="adaptive">Adaptive (AI)</button>
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <p>Guess a number between <span id="range-min">1</span> and <span id="range-max">100</span>.</p>
+                    <p>You have <span id="guesses-left">7</span> guesses remaining.</p>
+
+                    <div class="number-line-container">
+                        <div class="number-line" id="number-line">
+                            <div class="range-indicator" id="range-indicator"></div>
+                            <div class="target-marker" id="target-marker"></div>
+                        </div>
+                        <div class="range-labels">
+                            <span id="range-min-label">1</span>
+                            <span id="range-max-label">100</span>
+                        </div>
+                    </div>
+
+                    <div class="input-area">
+                        <input type="number" id="guess-input" placeholder="Enter your guess">
+                        <button class="btn btn-primary" id="submit-guess">Guess</button>
+                    </div>
+
+                    <div class="powerups">
+                        <button class="btn btn-warning powerup-btn" id="hint-powerup">
+                            <i class="fas fa-lightbulb"></i> Hint (10)
+                        </button>
+                        <button class="btn btn-warning powerup-btn" id="range-powerup">
+                            <i class="fas fa-compress"></i> Narrow (20)
+                        </button>
+                    </div>
+
+                    <div class="feedback" id="feedback">
+                        Enter your first guess above...
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Hint</h3>
+                    <div class="hint" id="hint">
+                        The number is <span id="hint-text"></span>.
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Your Guesses</h3>
+                    <div class="guess-history" id="guess-history">
+                        <div id="guess-list"></div>
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Game Stats</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div>Games Played</div>
+                            <div class="stat-value" id="games-played">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>Wins</div>
+                            <div class="stat-value" id="wins">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>Best Score</div>
+                            <div class="stat-value" id="best-score">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>Current Streak</div>
+                            <div class="stat-value" id="current-streak">0</div>
+                        </div>
+                    </div>
+                    <div class="action-buttons" style="margin-top: 15px;">
+                        <button class="btn btn-success" id="restart-btn">New Game</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div class="tab-content" id="profile-tab">
+                <div class="game-panel">
+                    <div class="profile-section">
+                        <div class="profile-avatar" id="profile-avatar">U</div>
+                        <div class="profile-info">
+                            <h3 id="player-name">User</h3>
+                            <div>Level: <span id="profile-level">1</span></div>
+                            <div>Coins: <span id="profile-coins">0</span></div>
+                            <div>Member Since: <span id="member-since">Today</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Player Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div>Total Games</div>
+                            <div class="stat-value" id="total-games">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>Games Won</div>
+                            <div class="stat-value" id="games-won">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>Win Rate</div>
+                            <div class="stat-value" id="win-rate">0%</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>Longest Streak</div>
+                            <div class="stat-value" id="longest-streak">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Change Name</h3>
+                    <div class="input-area">
+                        <input type="text" id="name-input" placeholder="Enter new name">
+                        <button class="btn btn-primary" id="save-name-btn">Save</button>
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Change Avatar</h3>
+                    <div class="avatar-selection" id="profile-avatar-selection">
+                        <div class="avatar-option" data-avatar="1">😀</div>
+                        <div class="avatar-option" data-avatar="2">😎</div>
+                        <div class="avatar-option" data-avatar="3">🧙</div>
+                        <div class="avatar-option" data-avatar="4">🦸</div>
+                        <div class="avatar-option" data-avatar="5">👽</div>
+                        <div class="avatar-option" data-avatar="6">🐶</div>
+                        <div class="avatar-option" data-avatar="7">🦊</div>
+                        <div class="avatar-option" data-avatar="8">🐵</div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="save-avatar-btn" style="margin-top: 10px;">Save Avatar</button>
+                </div>
+            </div>
+
+            <!-- Friends Tab -->
+            <div class="tab-content" id="friends-tab">
+                <div class="game-panel">
+                    <h3 class="panel-title">Add Friend</h3>
+                    <div class="input-area">
+                        <input type="text" id="friend-username" placeholder="Friend's username">
+                        <button class="btn btn-primary" id="add-friend-btn">Add</button>
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Your Friends</h3>
+                    <div class="friends-list" id="friends-list">
+                        <p>No friends yet. Add some friends to see them here!</p>
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Friend Requests</h3>
+                    <div id="friend-requests">
+                        <p>No pending friend requests.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rewards Tab -->
+            <div class="tab-content" id="rewards-tab">
+                <div class="game-panel">
+                    <h3 class="panel-title">Daily Reward</h3>
+                    <p id="reward-status">Claim your first daily reward!</p>
+                    <button class="btn btn-primary btn-block" id="claim-reward-btn">Claim Reward (5 coins)</button>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Rewards Calendar</h3>
+                    <p>Login daily to claim increasing rewards!</p>
+                    <div class="rewards-calendar">
+                        <div class="reward-day">
+                            <div>Day 1</div>
+                            <small>5 coins</small>
+                        </div>
+                        <div class="reward-day">
+                            <div>Day 2</div>
+                            <small>10 coins</small>
+                        </div>
+                        <div class="reward-day">
+                            <div>Day 3</div>
+                            <small>15 coins</small>
+                        </div>
+                        <div class="reward-day">
+                            <div>Day 4</div>
+                            <small>20 coins</small>
+                        </div>
+                        <div class="reward-day">
+                            <div>Day 5</div>
+                            <small>25 coins</small>
+                        </div>
+                        <div class="reward-day">
+                            <div>Day 6</div>
+                            <small>30 coins</small>
+                        </div>
+                        <div class="reward-day">
+                            <div>Day 7</div>
+                            <small>50 coins</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements Tab -->
+            <div class="tab-content" id="achievements-tab">
+                <div class="game-panel">
+                    <h3 class="panel-title">Your Achievements</h3>
+                    <div id="achievements-list">
+                        <div class="achievement" id="achievement-1">
+                            <div class="achievement-icon">🔒</div>
+                            <div>
+                                <strong>First Win</strong>
+                                <p>Win your first game</p>
+                                <small>Reward: 10 coins</small>
+                            </div>
+                        </div>
+                        <div class="achievement" id="achievement-2">
+                            <div class="achievement-icon">🔒</div>
+                            <div>
+                                <strong>Quick Thinker</strong>
+                                <p>Guess correctly in 3 tries or less</p>
+                                <small>Reward: 15 coins</small>
+                            </div>
+                        </div>
+                        <div class="achievement" id="achievement-3">
+                            <div class="achievement-icon">🔒</div>
+                            <div>
+                                <strong>Hard Mode Champion</strong>
+                                <p>Win on Hard difficulty</p>
+                                <small>Reward: 25 coins</small>
+                            </div>
+                        </div>
+                        <div class="achievement" id="achievement-4">
+                            <div class="achievement-icon">🔒</div>
+                            <div>
+                                <strong>Veteran Player</strong>
+                                <p>Play 10 games</p>
+                                <small>Reward: 20 coins</small>
+                            </div>
+                        </div>
+                        <div class="achievement" id="achievement-5">
+                            <div class="achievement-icon">🔒</div>
+                            <div>
+                                <strong>Perfect Guess</strong>
+                                <p>Guess correctly on first try</p>
+                                <small>Reward: 30 coins</small>
+                            </div>
+                        </div>
+                        <div class="achievement" id="achievement-6">
+                            <div class="achievement-icon">🔒</div>
+                            <div>
+                                <strong>Social Player</strong>
+                                <p>Add 3 friends</p>
+                                <small>Reward: 15 coins</small>
+                            </div>
+                        </div>
+                        <div class="achievement" id="achievement-7">
+                            <div class="achievement-icon">🔒</div>
+                            <div>
+                                <strong>Dedicated Player</strong>
+                                <p>Login for 7 consecutive days</p>
+                                <small>Reward: 50 coins</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Tab -->
+            <div class="tab-content" id="leaderboard-tab">
+                <div class="game-panel">
+                    <h3 class="panel-title">Leaderboard</h3>
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Score</th>
+                                <th>Difficulty</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            <tr>
+                                <td colspan="4" style="text-align: center;">Play games to appear on the leaderboard!</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settings-tab">
+                <div class="game-panel">
+                    <h3 class="panel-title">Appearance</h3>
+                    <div class="setting-group">
+                        <div class="setting-title">Theme</div>
+                        <select id="theme-select" class="btn-block">
+                            <option value="light">Light Mode</option>
+                            <option value="dark">Dark Mode</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Sound</h3>
+                    <div class="setting-group">
+                        <label>
+                            <input type="checkbox" id="sound-toggle" checked> Enable sounds
+                        </label>
+                    </div>
+                    <div class="setting-group">
+                        <div class="setting-title">Volume</div>
+                        <input type="range" id="volume-slider" min="0" max="100" value="50">
+                    </div>
+                    
+                    <div class="sound-options">
+                        <div class="sound-option">
+                            <label>Correct Guess:</label>
+                            <div class="sound-selector">
+                                <select class="sound-select" data-type="correct">
+                                    <option value="0">Chime 1</option>
+                                    <option value="1">Chime 2</option>
+                                    <option value="2">Bell</option>
+                                </select>
+                                <button class="preview-sound" data-type="correct">▶</button>
+                            </div>
+                        </div>
+                        
+                        <div class="sound-option">
+                            <label>Too High:</label>
+                            <div class="sound-selector">
+                                <select class="sound-select" data-type="high">
+                                    <option value="0">Buzzer 1</option>
+                                    <option value="1">Buzzer 2</option>
+                                    <option value="2">Negative</option>
+                                </select>
+                                <button class="preview-sound" data-type="high">▶</button>
+                            </div>
+                        </div>
+                        
+                        <div class="sound-option">
+                            <label>Too Low:</label>
+                            <div class="sound-selector">
+                                <select class="sound-select" data-type="low">
+                                    <option value="0">Buzzer 1</option>
+                                    <option value="1">Buzzer 2</option>
+                                    <option value="2">Negative</option>
+                                </select>
+                                <button class="preview-sound" data-type="low">▶</button>
+                            </div>
+                        </div>
+                        
+                        <div class="sound-option">
+                            <label>Game Win:</label>
+                            <div class="sound-selector">
+                                <select class="sound-select" data-type="win">
+                                    <option value="0">Victory 1</option>
+                                    <option value="1">Victory 2</option>
+                                    <option value="2">Fanfare</option>
+                                </select>
+                                <button class="preview-sound" data-type="win">▶</button>
+                            </div>
+                        </div>
+                        
+                        <div class="sound-option">
+                            <label>Game Over:</label>
+                            <div class="sound-selector">
+                                <select class="sound-select" data-type="lose">
+                                    <option value="0">Lose 1</option>
+                                    <option value="1">Lose 2</option>
+                                    <option value="2">Sad Trombone</option>
+                                </select>
+                                <button class="preview-sound" data-type="lose">▶</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-panel">
+                    <h3 class="panel-title">Game Data</h3>
+                    <button class="btn btn-primary btn-block" id="save-data-btn">Save Game Data</button>
+                    <button class="btn btn-warning btn-block" id="reset-data-btn" style="margin-top: 10px;">Reset Game Data</button>
+                </div>
+
+                <div class="game-panel">
+                    <button class="btn btn-block" id="logout-btn" style="background-color: var(--error-color); color: white;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Game state
+        let targetNumber = 0;
+        let guessesLeft = 0;
+        let maxGuesses = 0;
+        let minRange = 1;
+        let maxRange = 100;
+        let gamesPlayed = 0;
+        let wins = 0;
+        let bestScore = null;
+        let currentStreak = 0;
+        let longestStreak = 0;
+        let coins = 0;
+        let playerLevel = 1;
+        let playerXP = 0;
+        let playerName = "Player";
+        let guesses = [];
+        let adaptiveDifficulty = false;
+        let playerSkill = 50;
+        let achievements = {
+            firstWin: false,
+            quickThinker: false,
+            hardChampion: false,
+            veteran: false,
+            perfectGuess: false,
+            socialPlayer: false,
+            dedicatedPlayer: false
+        };
+        let soundsEnabled = true;
+        let volume = 0.5;
+        let currentUser = null;
+        let users = {};
+        let friends = [];
+        let friendRequests = [];
+        let lastRewardClaim = null;
+        let consecutiveDays = 0;
+        let selectedAvatar = "1";
+        let selectedSounds = {
+            correct: 0,
+            high: 0,
+            low: 1,
+            win: 0,
+            lose: 0
+        };
+
+        // Sound configuration
+        const soundOptions = {
+            correct: [
+                { name: "Chime 1", url: "https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" },
+                { name: "Chime 2", url: "https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" },
+                { name: "Bell", url: "https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3" }
+            ],
+            high: [
+                { name: "Buzzer 1", url: "https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" },
+                { name: "Buzzer 2", url: "https://assets.mixkit.co/sfx/preview/mixkit-warning-alarm-1001.mp3" },
+                { name: "Negative", url: "https://assets.mixkit.co/sfx/preview/mixkit-software-interface-remove-2578.mp3" }
+            ],
+            low: [
+                { name: "Buzzer 1", url: "https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" },
+                { name: "Buzzer 2", url: "https://assets.mixkit.co/sfx/preview/mixkit-warning-alarm-1001.mp3" },
+                { name: "Negative", url: "https://assets.mixkit.co/sfx/preview/mixkit-software-interface-remove-2578.mp3" }
+            ],
+            win: [
+                { name: "Victory 1", url: "https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" },
+                { name: "Victory 2", url: "https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3" },
+                { name: "Fanfare", url: "https://assets.mixkit.co/sfx/preview/mixkit-achievement-completed-2060.mp3" }
+            ],
+            lose: [
+                { name: "Lose 1", url: "https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3" },
+                { name: "Lose 1", url: "https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3" },
+                { name: "Lose 2", url: "https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.mp3" },
+                { name: "Sad Trombone", url: "https://assets.mixkit.co/sfx/preview/mixkit-sad-trombone-1947.mp3" }
+            ]
+        };
+
+        // DOM elements
+        const authModal = document.getElementById('auth-modal');
+        const appContainer = document.getElementById('app-container');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const loginTab = document.querySelector('[data-auth-tab="login"]');
+        const signupTab = document.querySelector('[data-auth-tab="signup"]');
+        const loginContent = document.getElementById('login-content');
+        const signupContent = document.getElementById('signup-content');
+        const showLogin = document.getElementById('show-login');
+        const showSignup = document.getElementById('show-signup');
+        const closeAuth = document.getElementById('close-auth');
+        const notification = document.getElementById('notification');
+        const guessInput = document.getElementById('guess-input');
+        const submitGuess = document.getElementById('submit-guess');
+        const feedback = document.getElementById('feedback');
+        const guessList = document.getElementById('guess-list');
+        const rangeMin = document.getElementById('range-min');
+        const rangeMax = document.getElementById('range-max');
+        const rangeMinLabel = document.getElementById('range-min-label');
+        const rangeMaxLabel = document.getElementById('range-max-label');
+        const numberLine = document.getElementById('number-line');
+        const rangeIndicator = document.getElementById('range-indicator');
+        const targetMarker = document.getElementById('target-marker');
+        const guessesLeftEl = document.getElementById('guesses-left');
+        const restartBtn = document.getElementById('restart-btn');
+        const hintPowerup = document.getElementById('hint-powerup');
+        const rangePowerup = document.getElementById('range-powerup');
+        const hintText = document.getElementById('hint-text');
+        const gamesPlayedEl = document.getElementById('games-played');
+        const winsEl = document.getElementById('wins');
+        const bestScoreEl = document.getElementById('best-score');
+        const currentStreakEl = document.getElementById('current-streak');
+        const headerCoins = document.getElementById('header-coins');
+        const headerAvatar = document.getElementById('header-avatar');
+        const profileAvatar = document.getElementById('profile-avatar');
+        const playerNameEl = document.getElementById('player-name');
+        const profileLevel = document.getElementById('profile-level');
+        const profileCoins = document.getElementById('profile-coins');
+        const memberSince = document.getElementById('member-since');
+        const totalGames = document.getElementById('total-games');
+        const gamesWon = document.getElementById('games-won');
+        const winRate = document.getElementById('win-rate');
+        const longestStreakEl = document.getElementById('longest-streak');
+        const nameInput = document.getElementById('name-input');
+        const saveNameBtn = document.getElementById('save-name-btn');
+        const saveAvatarBtn = document.getElementById('save-avatar-btn');
+        const friendUsername = document.getElementById('friend-username');
+        const addFriendBtn = document.getElementById('add-friend-btn');
+        const friendsList = document.getElementById('friends-list');
+        const friendRequestsEl = document.getElementById('friend-requests');
+        const claimRewardBtn = document.getElementById('claim-reward-btn');
+        const rewardStatus = document.getElementById('reward-status');
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        const themeSelect = document.getElementById('theme-select');
+        const soundToggle = document.getElementById('sound-toggle');
+        const volumeSlider = document.getElementById('volume-slider');
+        const saveDataBtn = document.getElementById('save-data-btn');
+        const resetDataBtn = document.getElementById('reset-data-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const avatarSelection = document.getElementById('avatar-selection');
+        const profileAvatarSelection = document.getElementById('profile-avatar-selection');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const tabs = document.querySelectorAll('.tab');
+        const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+
+        // Initialize the game
+        function init() {
+            loadGameData();
+            setupEventListeners();
+            checkAuthState();
+            updateUI();
+        }
+
+        // Load game data from localStorage
+        function loadGameData() {
+            const savedData = localStorage.getItem('numberGuesserData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                users = data.users || {};
+                currentUser = data.currentUser || null;
+                
+                if (currentUser && users[currentUser]) {
+                    const user = users[currentUser];
+                    gamesPlayed = user.gamesPlayed || 0;
+                    wins = user.wins || 0;
+                    bestScore = user.bestScore || null;
+                    currentStreak = user.currentStreak || 0;
+                    longestStreak = user.longestStreak || 0;
+                    coins = user.coins || 0;
+                    playerLevel = user.level || 1;
+                    playerXP = user.xp || 0;
+                    playerName = user.name || "Player";
+                    achievements = user.achievements || {};
+                    friends = user.friends || [];
+                    friendRequests = user.friendRequests || [];
+                    lastRewardClaim = user.lastRewardClaim || null;
+                    consecutiveDays = user.consecutiveDays || 0;
+                    selectedAvatar = user.avatar || "1";
+                    selectedSounds = user.sounds || {
+                        correct: 0,
+                        high: 0,
+                        low: 1,
+                        win: 0,
+                        lose: 0
+                    };
+                    soundsEnabled = user.soundsEnabled !== false;
+                    volume = user.volume || 0.5;
+                }
+            }
+        }
+
+        // Save game data to localStorage
+        function saveGameData() {
+            if (currentUser) {
+                users[currentUser] = {
+                    gamesPlayed,
+                    wins,
+                    bestScore,
+                    currentStreak,
+                    longestStreak,
+                    coins,
+                    level: playerLevel,
+                    xp: playerXP,
+                    name: playerName,
+                    achievements,
+                    friends,
+                    friendRequests,
+                    lastRewardClaim,
+                    consecutiveDays,
+                    avatar: selectedAvatar,
+                    sounds: selectedSounds,
+                    soundsEnabled,
+                    volume
+                };
+                
+                const data = {
+                    users,
+                    currentUser
+                };
+                
+                localStorage.setItem('numberGuesserData', JSON.stringify(data));
+                showNotification('Game data saved!');
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Auth modal
+            loginTab.addEventListener('click', () => switchAuthTab('login'));
+            signupTab.addEventListener('click', () => switchAuthTab('signup'));
+            showLogin.addEventListener('click', () => switchAuthTab('login'));
+            showSignup.addEventListener('click', () => switchAuthTab('signup'));
+            closeAuth.addEventListener('click', () => authModal.style.display = 'none');
+            loginForm.addEventListener('submit', handleLogin);
+            signupForm.addEventListener('submit', handleSignup);
+            
+            // Game controls
+            submitGuess.addEventListener('click', handleGuess);
+            guessInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleGuess();
+            });
+            restartBtn.addEventListener('click', startNewGame);
+            hintPowerup.addEventListener('click', useHintPowerup);
+            rangePowerup.addEventListener('click', useRangePowerup);
+            
+            // Profile
+            saveNameBtn.addEventListener('click', savePlayerName);
+            saveAvatarBtn.addEventListener('click', savePlayerAvatar);
+            
+            // Friends
+            addFriendBtn.addEventListener('click', addFriend);
+            
+            // Rewards
+            claimRewardBtn.addEventListener('click', claimDailyReward);
+            
+            // Settings
+            themeSelect.addEventListener('change', changeTheme);
+            soundToggle.addEventListener('change', toggleSounds);
+            volumeSlider.addEventListener('input', changeVolume);
+            saveDataBtn.addEventListener('click', saveGameData);
+            resetDataBtn.addEventListener('click', resetGameData);
+            logoutBtn.addEventListener('click', logout);
+            
+            // Avatar selection
+            avatarSelection.querySelectorAll('.avatar-option').forEach(option => {
+                option.addEventListener('click', () => selectAvatar(option, 'signup'));
+            });
+            
+            profileAvatarSelection.querySelectorAll('.avatar-option').forEach(option => {
+                option.addEventListener('click', () => selectAvatar(option, 'profile'));
+            });
+            
+            // Tab navigation
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+            
+            // Difficulty buttons
+            difficultyBtns.forEach(btn => {
+                btn.addEventListener('click', () => selectDifficulty(btn.dataset.difficulty));
+            });
+            
+            // Sound preview buttons
+            document.querySelectorAll('.preview-sound').forEach(btn => {
+                btn.addEventListener('click', () => previewSound(btn.dataset.type));
+            });
+            
+            // Sound select changes
+            document.querySelectorAll('.sound-select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    selectedSounds[e.target.dataset.type] = parseInt(e.target.value);
+                    saveGameData();
+                });
+            });
+        }
+
+        // Check authentication state
+        function checkAuthState() {
+            if (currentUser) {
+                authModal.style.display = 'none';
+                appContainer.style.display = 'flex';
+                startNewGame();
+            } else {
+                authModal.style.display = 'flex';
+                appContainer.style.display = 'none';
+            }
+        }
+
+        // Switch between login/signup tabs
+        function switchAuthTab(tab) {
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                signupTab.classList.remove('active');
+                loginContent.classList.add('active');
+                signupContent.classList.remove('active');
+            } else {
+                loginTab.classList.remove('active');
+                signupTab.classList.add('active');
+                loginContent.classList.remove('active');
+                signupContent.classList.add('active');
+            }
+        }
+
+        // Handle login
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                showNotification('Please enter both username and password', 'error');
+                return;
+            }
+            
+            if (users[username] && users[username].password === password) {
+                currentUser = username;
+                loadUserData();
+                checkAuthState();
+                showNotification('Login successful!');
+            } else {
+                showNotification('Invalid username or password', 'error');
+            }
+        }
+
+        // Handle signup
+        function handleSignup(e) {
+            e.preventDefault();
+            const username = document.getElementById('signup-username').value;
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+            
+            if (!username || !password || !confirm) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (password !== confirm) {
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+            
+            if (users[username]) {
+                showNotification('Username already exists', 'error');
+                return;
+            }
+            
+            // Create new user
+            users[username] = {
+                password,
+                gamesPlayed: 0,
+                wins: 0,
+                bestScore: null,
+                currentStreak: 0,
+                longestStreak: 0,
+                coins: 50, // Starting coins
+                level: 1,
+                xp: 0,
+                name: username,
+                achievements: {},
+                friends: [],
+                friendRequests: [],
+                lastRewardClaim: null,
+                consecutiveDays: 0,
+                avatar: selectedAvatar,
+                sounds: selectedSounds,
+                soundsEnabled: true,
+                volume: 0.5,
+                joinDate: new Date().toISOString()
+            };
+            
+            currentUser = username;
+            saveGameData();
+            loadUserData();
+            checkAuthState();
+            showNotification('Account created successfully!');
+        }
+
+        // Load user data
+        function loadUserData() {
+            if (currentUser && users[currentUser]) {
+                const user = users[currentUser];
+                gamesPlayed = user.gamesPlayed || 0;
+                wins = user.wins || 0;
+                bestScore = user.bestScore || null;
+                currentStreak = user.currentStreak || 0;
+                longestStreak = user.longestStreak || 0;
+                coins = user.coins || 0;
+                playerLevel = user.level || 1;
+                playerXP = user.xp || 0;
+                playerName = user.name || currentUser;
+                achievements = user.achievements || {};
+                friends = user.friends || [];
+                friendRequests = user.friendRequests || [];
+                lastRewardClaim = user.lastRewardClaim || null;
+                consecutiveDays = user.consecutiveDays || 0;
+                selectedAvatar = user.avatar || "1";
+                selectedSounds = user.sounds || {
+                    correct: 0,
+                    high: 0,
+                    low: 1,
+                    win: 0,
+                    lose: 0
+                };
+                soundsEnabled = user.soundsEnabled !== false;
+                volume = user.volume || 0.5;
+                
+                updateUI();
+            }
+        }
+
+        // Start a new game
+        function startNewGame() {
+            if (adaptiveDifficulty) {
+                // Adjust range based on player skill (1-100)
+                const baseRange = Math.max(10, Math.min(200, Math.floor(playerSkill * 2)));
+                minRange = 1;
+                maxRange = baseRange;
+            }
+            
+            targetNumber = Math.floor(Math.random() * (maxRange - minRange + 1)) + minRange;
+            maxGuesses = calculateMaxGuesses();
+            guessesLeft = maxGuesses;
+            guesses = [];
+            
+            updateGameUI();
+            guessInput.focus();
+        }
+
+        // Calculate max guesses based on range size
+        function calculateMaxGuesses() {
+            const rangeSize = maxRange - minRange + 1;
+            if (adaptiveDifficulty) {
+                return Math.max(5, Math.min(10, Math.floor(Math.log2(rangeSize) * (100 / playerSkill))));
+            }
+            return Math.floor(Math.log2(rangeSize)) + 1;
+        }
+
+        // Handle guess submission
+        function handleGuess() {
+            const guess = parseInt(guessInput.value);
+            
+            if (isNaN(guess)) {
+                showNotification('Please enter a valid number', 'error');
+                return;
+            }
+            
+            if (guess < minRange || guess > maxRange) {
+                showNotification(`Please enter a number between ${minRange} and ${maxRange}`, 'error');
+                return;
+            }
+            
+            guesses.push(guess);
+            guessesLeft--;
+            
+            // Update game state
+            if (guess === targetNumber) {
+                handleWin();
+            } else if (guessesLeft <= 0) {
+                handleLoss();
+            } else {
+                provideFeedback(guess);
+            }
+            
+            updateGameUI();
+            guessInput.value = '';
+            guessInput.focus();
+        }
+
+        // Handle winning the game
+        function handleWin() {
+            gamesPlayed++;
+            wins++;
+            currentStreak++;
+            
+            if (currentStreak > longestStreak) {
+                longestStreak = currentStreak;
+            }
+            
+            // Calculate score (higher is better)
+            const score = Math.floor((maxGuesses - guesses.length + 1) * 100 / maxGuesses);
+            
+            if (!bestScore || score > bestScore) {
+                bestScore = score;
+            }
+            
+            // Award coins based on difficulty
+            let coinsWon = 0;
+            if (adaptiveDifficulty) {
+                coinsWon = Math.floor(score / 10);
+            } else if (maxRange <= 50) {
+                coinsWon = 5;
+            } else if (maxRange <= 100) {
+                coinsWon = 10;
+            } else {
+                coinsWon = 15;
+            }
+            
+            coins += coinsWon;
+            
+            // Award XP
+            const xpGain = Math.floor(score / 5);
+            playerXP += xpGain;
+            checkLevelUp();
+            
+            // Check achievements
+            checkAchievements();
+            
+            // Play win sound
+            playSound('win');
+            
+            // Show win message
+            feedback.innerHTML = `Congratulations! You guessed the number ${targetNumber} in ${guesses.length} tries. You earned ${coinsWon} coins and ${xpGain} XP!`;
+            
+            // Save game data
+            saveGameData();
+        }
+
+        // Handle losing the game
+        function handleLoss() {
+            gamesPlayed++;
+            currentStreak = 0;
+            
+            // Play lose sound
+            playSound('lose');
+            
+            // Show lose message
+            feedback.innerHTML = `Game over! The number was ${targetNumber}.`;
+            
+            // Save game data
+            saveGameData();
+        }
+
+        // Provide feedback for incorrect guess
+        function provideFeedback(guess) {
+            if (guess < targetNumber) {
+                minRange = Math.max(minRange, guess + 1);
+                feedback.innerHTML = `Too low! Try a higher number.`;
+                playSound('low');
+            } else {
+                maxRange = Math.min(maxRange, guess - 1);
+                feedback.innerHTML = `Too high! Try a lower number.`;
+                playSound('high');
+            }
+            
+            // Update adaptive difficulty
+            if (adaptiveDifficulty) {
+                const expectedGuesses = Math.ceil(Math.log2(maxRange - minRange + 1));
+                const actualGuesses = maxGuesses - guessesLeft;
+                const accuracy = (expectedGuesses - actualGuesses) / expectedGuesses;
+                
+                // Adjust player skill (clamped between 10 and 100)
+                playerSkill = Math.max(10, Math.min(100, playerSkill + accuracy * 5));
+            }
+        }
+
+        // Use hint powerup
+        function useHintPowerup() {
+            if (coins < 10) {
+                showNotification('Not enough coins for this powerup', 'error');
+                return;
+            }
+            
+            if (guesses.length === 0) {
+                showNotification('Make at least one guess first', 'error');
+                return;
+            }
+            
+            coins -= 10;
+            
+            // Provide a hint (even/odd, divisible by, etc.)
+            let hint = '';
+            const hintType = Math.floor(Math.random() * 3);
+            
+            switch (hintType) {
+                case 0:
+                    hint = targetNumber % 2 === 0 ? 'even' : 'odd';
+                    break;
+                case 1:
+                    const divisor = Math.floor(Math.random() * 5) + 2; // 2-6
+                    hint = targetNumber % divisor === 0 ? `divisible by ${divisor}` : `not divisible by ${divisor}`;
+                    break;
+                case 2:
+                    hint = `between ${Math.max(minRange, targetNumber - 10)} and ${Math.min(maxRange, targetNumber + 10)}`;
+                    break;
+            }
+            
+            hintText.textContent = hint;
+            updateUI();
+            saveGameData();
+            showNotification('Hint purchased!');
+        }
+
+        // Use range powerup
+        function useRangePowerup() {
+            if (coins < 20) {
+                showNotification('Not enough coins for this powerup', 'error');
+                return;
+            }
+            
+            coins -= 20;
+            
+            // Narrow the range by 20%
+            const rangeSize = maxRange - minRange;
+            const newRangeSize = Math.floor(rangeSize * 0.8);
+            const center = Math.floor((minRange + maxRange) / 2);
+            
+            minRange = Math.max(1, center - Math.floor(newRangeSize / 2));
+            maxRange = minRange + newRangeSize;
+            
+            // Adjust target number if it's outside the new range
+            if (targetNumber < minRange) minRange = targetNumber;
+            if (targetNumber > maxRange) maxRange = targetNumber;
+            
+            // Recalculate guesses left based on new range
+            const newMaxGuesses = calculateMaxGuesses();
+            const guessesUsed = maxGuesses - guessesLeft;
+            guessesLeft = newMaxGuesses - guessesUsed;
+            maxGuesses = newMaxGuesses;
+            
+            updateGameUI();
+            saveGameData();
+            showNotification('Range narrowed!');
+        }
+
+        // Select difficulty
+        function selectDifficulty(difficulty) {
+            difficultyBtns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            adaptiveDifficulty = false;
+            
+            switch (difficulty) {
+                case 'easy':
+                    minRange = 1;
+                    maxRange = 50;
+                    break;
+                case 'medium':
+                    minRange = 1;
+                    maxRange = 100;
+                    break;
+                case 'hard':
+                    minRange = 1;
+                    maxRange = 200;
+                    break;
+                case 'adaptive':
+                    adaptiveDifficulty = true;
+                    break;
+            }
+            
+            startNewGame();
+        }
+
+        // Check for level up
+        function checkLevelUp() {
+            const xpNeeded = playerLevel * 100;
+            if (playerXP >= xpNeeded) {
+                playerLevel++;
+                playerXP -= xpNeeded;
+                coins += playerLevel * 5; // Bonus coins for leveling up
+                showNotification(`Level up! You're now level ${playerLevel} and earned ${playerLevel * 5} coins!`);
+                saveGameData();
+            }
+        }
+
+        // Check achievements
+        function checkAchievements() {
+            // First win
+            if (wins === 1 && !achievements.firstWin) {
+                achievements.firstWin = true;
+                coins += 10;
+                unlockAchievement(1, 'First Win');
+            }
+            
+            // Quick thinker (win in 3 or less guesses)
+            if (guesses.length <= 3 && !achievements.quickThinker) {
+                achievements.quickThinker = true;
+                coins += 15;
+                unlockAchievement(2, 'Quick Thinker');
+            }
+            
+            // Hard mode champion
+            if (maxRange >= 200 && !achievements.hardChampion) {
+                achievements.hardChampion = true;
+                coins += 25;
+                unlockAchievement(3, 'Hard Mode Champion');
+            }
+            
+            // Veteran player (10 games)
+            if (gamesPlayed >= 10 && !achievements.veteran) {
+                achievements.veteran = true;
+                coins += 20;
+                unlockAchievement(4, 'Veteran Player');
+            }
+            
+            // Perfect guess (win on first try)
+            if (guesses.length === 1 && !achievements.perfectGuess) {
+                achievements.perfectGuess = true;
+                coins += 30;
+                unlockAchievement(5, 'Perfect Guess');
+            }
+            
+            // Social player (3 friends)
+            if (friends.length >= 3 && !achievements.socialPlayer) {
+                achievements.socialPlayer = true;
+                coins += 15;
+                unlockAchievement(6, 'Social Player');
+            }
+        }
+
+        // Unlock achievement
+        function unlockAchievement(id, name) {
+            const achievementEl = document.getElementById(`achievement-${id}`);
+            if (achievementEl) {
+                achievementEl.classList.add('unlocked');
+                achievementEl.querySelector('.achievement-icon').textContent = '🏆';
+                showNotification(`Achievement unlocked: ${name}!`);
+            }
+        }
+
+        // Update game UI
+        function updateGameUI() {
+            // Update range display
+            rangeMin.textContent = minRange;
+            rangeMax.textContent = maxRange;
+            rangeMinLabel.textContent = minRange;
+            rangeMaxLabel.textContent = maxRange;
+            
+            // Update guesses left
+            guessesLeftEl.textContent = guessesLeft;
+            
+            // Update number line
+            updateNumberLine();
+            
+            // Update guess history
+            updateGuessHistory();
+            
+            // Update stats
+            updateStats();
+        }
+
+        // Update number line visualization
+        function updateNumberLine() {
+            const totalRange = maxRange - minRange;
+            const targetPosition = ((targetNumber - minRange) / totalRange) * 100;
+            
+            // Show target marker only in debug mode (for testing)
+            if (localStorage.getItem('debugMode') === 'true') {
+                targetMarker.style.left = `${targetPosition}%`;
+                targetMarker.style.display = 'block';
+            } else {
+                targetMarker.style.display = 'none';
+            }
+            
+            // Update range indicator
+            rangeIndicator.style.left = '0%';
+            rangeIndicator.style.width = '100%';
+        }
+
+        // Update guess history
+        function updateGuessHistory() {
+            guessList.innerHTML = '';
+            guesses.forEach((guess, index) => {
+                const guessEl = document.createElement('div');
+                guessEl.className = 'guess-item';
+                
+                const guessNumber = document.createElement('span');
+                guessNumber.textContent = `Guess ${index + 1}: ${guess} `;
+                
+                const guessResult = document.createElement('span');
+                if (guess === targetNumber) {
+                    guessResult.textContent = '✅ Correct!';
+                    guessResult.style.color = 'var(--success-color)';
+                } else if (guess < targetNumber) {
+                    guessResult.textContent = '⬆ Too low';
+                    guessResult.style.color = 'var(--warning-color)';
+                } else {
+                    guessResult.textContent = '⬇ Too high';
+                    guessResult.style.color = 'var(--error-color)';
+                }
+                
+                guessEl.appendChild(guessNumber);
+                guessEl.appendChild(guessResult);
+                guessList.appendChild(guessEl);
+            });
+        }
+
+        // Update stats display
+        function updateStats() {
+            gamesPlayedEl.textContent = gamesPlayed;
+            winsEl.textContent = wins;
+            bestScoreEl.textContent = bestScore ? bestScore : '-';
+            currentStreakEl.textContent = currentStreak;
+            
+            // Profile stats
+            totalGames.textContent = gamesPlayed;
+            gamesWon.textContent = wins;
+            winRate.textContent = gamesPlayed > 0 ? `${Math.round((wins / gamesPlayed) * 100)}%` : '0%';
+            longestStreakEl.textContent = longestStreak;
+            
+            // Header coins and avatar
+            headerCoins.textContent = coins;
+            headerAvatar.textContent = getAvatarEmoji(selectedAvatar);
+            
+            // Profile info
+            profileAvatar.textContent = getAvatarEmoji(selectedAvatar);
+            playerNameEl.textContent = playerName;
+            profileLevel.textContent = playerLevel;
+            profileCoins.textContent = coins;
+            
+            // Update reward calendar
+            updateRewardCalendar();
+            
+            // Update leaderboard
+            updateLeaderboard();
+            
+            // Update achievements
+            updateAchievements();
+            
+            // Update friends list
+            updateFriendsList();
+        }
+
+        // Get avatar emoji
+        function getAvatarEmoji(avatarId) {
+            const avatars = {
+                '1': '😀',
+                '2': '😎',
+                '3': '🧙',
+                '4': '🦸',
+                '5': '👽',
+                '6': '🐶',
+                '7': '🦊',
+                '8': '🐵'
+            };
+            return avatars[avatarId] || '👤';
+        }
+
+        // Select avatar
+        function selectAvatar(element, context) {
+            const avatarId = element.dataset.avatar;
+            
+            if (context === 'signup') {
+                // Deselect all
+                avatarSelection.querySelectorAll('.avatar-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Select clicked
+                element.classList.add('selected');
+                selectedAvatar = avatarId;
+            } else if (context === 'profile') {
+                // Deselect all
+                profileAvatarSelection.querySelectorAll('.avatar-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Select clicked
+                element.classList.add('selected');
+                selectedAvatar = avatarId;
+            }
+        }
+
+        // Save player name
+        function savePlayerName() {
+            const newName = nameInput.value.trim();
+            
+            if (!newName) {
+                showNotification('Please enter a name', 'error');
+                return;
+            }
+            
+            playerName = newName;
+            saveGameData();
+            updateUI();
+            showNotification('Name updated!');
+            nameInput.value = '';
+        }
+
+        // Save player avatar
+        function savePlayerAvatar() {
+            saveGameData();
+            updateUI();
+            showNotification('Avatar updated!');
+        }
+
+        // Add friend
+        function addFriend() {
+            const friendName = friendUsername.value.trim();
+            
+            if (!friendName) {
+                showNotification('Please enter a username', 'error');
+                return;
+            }
+            
+            if (friendName === currentUser) {
+                showNotification('You cannot add yourself', 'error');
+                return;
+            }
+            
+            if (friends.includes(friendName)) {
+                showNotification(`${friendName} is already your friend`, 'error');
+                return;
+            }
+            
+            if (!users[friendName]) {
+                showNotification('User not found', 'error');
+                return;
+            }
+            
+            // In a real app, you would send a friend request here
+            // For this demo, we'll just add them directly
+            friends.push(friendName);
+            saveGameData();
+            updateUI();
+            showNotification(`${friendName} added as a friend!`);
+            friendUsername.value = '';
+        }
+
+        // Update friends list
+        function updateFriendsList() {
+            friendsList.innerHTML = '';
+            
+            if (friends.length === 0) {
+                friendsList.innerHTML = '<p>No friends yet. Add some friends to see them here!</p>';
+                return;
+            }
+            
+            friends.forEach(friend => {
+                const friendEl = document.createElement('div');
+                friendEl.className = 'friend-item';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'friend-avatar';
+                avatar.textContent = users[friend]?.avatar ? getAvatarEmoji(users[friend].avatar) : '👤';
+                
+                const name = document.createElement('div');
+                name.textContent = users[friend]?.name || friend;
+                
+                friendEl.appendChild(avatar);
+                friendEl.appendChild(name);
+                friendsList.appendChild(friendEl);
+            });
+        }
+
+        // Claim daily reward
+        function claimDailyReward() {
+            const today = new Date().toDateString();
+            
+            if (lastRewardClaim === today) {
+                showNotification('You already claimed your reward today', 'error');
+                return;
+            }
+            
+            // Check if consecutive
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const isConsecutive = lastRewardClaim === yesterday.toDateString();
+            
+            if (isConsecutive) {
+                consecutiveDays++;
+            } else {
+                consecutiveDays = 1;
+            }
+            
+            // Calculate reward (5 coins per day, capped at 7 days)
+            const day = Math.min(consecutiveDays, 7);
+            const reward = day * 5;
+            
+            coins += reward;
+            lastRewardClaim = today;
+            
+            // Check for dedicated player achievement
+            if (consecutiveDays >= 7 && !achievements.dedicatedPlayer) {
+                achievements.dedicatedPlayer = true;
+                coins += 50;
+                unlockAchievement(7, 'Dedicated Player');
+            }
+            
+            saveGameData();
+            updateUI();
+            showNotification(`You claimed ${reward} coins! Day ${day} of ${consecutiveDays >= 7 ? '7+' : '7'}`);
+        }
+
+        // Update reward calendar
+        function updateRewardCalendar() {
+            const today = new Date().toDateString();
+            const rewardDays = document.querySelectorAll('.reward-day');
+            
+            rewardDays.forEach((day, index) => {
+                day.classList.remove('claimed', 'today');
+                
+                // Mark today
+                if (lastRewardClaim !== today && index === 0) {
+                    day.classList.add('today');
+                }
+                
+                // Mark claimed days
+                if (lastRewardClaim === today && consecutiveDays > index) {
+                    day.classList.add('claimed');
+                } else if (consecutiveDays > index + 1) {
+                    day.classList.add('claimed');
+                }
+            });
+            
+            // Update reward status
+            if (lastRewardClaim === today) {
+                rewardStatus.textContent = 'You claimed your reward today! Come back tomorrow.';
+                claimRewardBtn.disabled = true;
+            } else {
+                const day = Math.min(consecutiveDays + 1, 7);
+                const reward = day * 5;
+                rewardStatus.textContent = `Day ${day} reward: ${reward} coins`;
+                claimRewardBtn.disabled = false;
+                claimRewardBtn.textContent = `Claim Reward (${reward} coins)`;
+            }
+        }
+
+        // Update leaderboard
+        function updateLeaderboard() {
+            leaderboardBody.innerHTML = '';
+            
+            // Get all users with at least one win
+            const players = Object.keys(users)
+                .filter(username => users[username].wins > 0)
+                .map(username => ({
+                    username,
+                    name: users[username].name || username,
+                    score: users[username].bestScore || 0,
+                    difficulty: users[username].adaptive ? 'Adaptive' : 
+                              users[username].maxRange === 50 ? 'Easy' :
+                              users[username].maxRange === 100 ? 'Medium' : 'Hard',
+                    avatar: users[username].avatar || '1'
+                }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 10);
+            
+            if (players.length === 0) {
+                leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Play games to appear on the leaderboard!</td></tr>';
+                return;
+            }
+            
+            players.forEach((player, index) => {
+                const row = document.createElement('tr');
+                
+                const rankCell = document.createElement('td');
+                rankCell.textContent = index + 1;
+                
+                const playerCell = document.createElement('td');
+                playerCell.style.display = 'flex';
+                playerCell.style.alignItems = 'center';
+                playerCell.style.gap = '8px';
+                
+                const avatar = document.createElement('div');
+                avatar.textContent = getAvatarEmoji(player.avatar);
+                
+                const name = document.createElement('div');
+                name.textContent = player.name;
+                
+                playerCell.appendChild(avatar);
+                playerCell.appendChild(name);
+                
+                const scoreCell = document.createElement('td');
+                scoreCell.textContent = player.score;
+                
+                const difficultyCell = document.createElement('td');
+                difficultyCell.textContent = player.difficulty;
+                
+                row.appendChild(rankCell);
+                row.appendChild(playerCell);
+                row.appendChild(scoreCell);
+                row.appendChild(difficultyCell);
+                
+                leaderboardBody.appendChild(row);
+            });
+        }
+
+        // Update achievements
+        function updateAchievements() {
+            // Update achievement icons
+            if (achievements.firstWin) {
+                document.getElementById('achievement-1').querySelector('.achievement-icon').textContent = '🏆';
+                document.getElementById('achievement-1').classList.add('unlocked');
+            }
+            
+            if (achievements.quickThinker) {
+                document.getElementById('achievement-2').querySelector('.achievement-icon').textContent = '🏆';
+                document.getElementById('achievement-2').classList.add('unlocked');
+            }
+            
+            if (achievements.hardChampion) {
+                document.getElementById('achievement-3').querySelector('.achievement-icon').textContent = '🏆';
+                document.getElementById('achievement-3').classList.add('unlocked');
+            }
+            
+            if (achievements.veteran) {
+                document.getElementById('achievement-4').querySelector('.achievement-icon').textContent = '🏆';
+                document.getElementById('achievement-4').classList.add('unlocked');
+            }
+            
+            if (achievements.perfectGuess) {
+                document.getElementById('achievement-5').querySelector('.achievement-icon').textContent = '🏆';
+                document.getElementById('achievement-5').classList.add('unlocked');
+            }
+            
+            if (achievements.socialPlayer) {
+                document.getElementById('achievement-6').querySelector('.achievement-icon').textContent = '🏆';
+                document.getElementById('achievement-6').classList.add('unlocked');
+            }
+            
+            if (achievements.dedicatedPlayer) {
+                document.getElementById('achievement-7').querySelector('.achievement-icon').textContent = '🏆';
+                document.getElementById('achievement-7').classList.add('unlocked');
+            }
+        }
+
+        // Switch tabs
+        function switchTab(tabId) {
+            // Update tab navigation
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabId) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update tab content
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === `${tabId}-tab`) {
+                    content.classList.add('active');
+                }
+            });
+        }
+
+        // Change theme
+        function changeTheme() {
+            if (themeSelect.value === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            saveGameData();
+        }
+
+        // Toggle sounds
+        function toggleSounds() {
+            soundsEnabled = soundToggle.checked;
+            saveGameData();
+        }
+
+        // Change volume
+        function changeVolume() {
+            volume = volumeSlider.value / 100;
+            saveGameData();
+        }
+
+        // Play sound
+        function playSound(type) {
+            if (!soundsEnabled) return;
+            
+            const soundIndex = selectedSounds[type];
+            const soundUrl = soundOptions[type][soundIndex].url;
+            
+            const audio = new Audio(soundUrl);
+            audio.volume = volume;
+            audio.play().catch(e => console.log('Audio play failed:', e));
+        }
+
+        // Preview sound
+        function previewSound(type) {
+            if (!soundsEnabled) {
+                showNotification('Sounds are disabled', 'error');
+                return;
+            }
+            
+            playSound(type);
+        }
+
+        // Reset game data
+        function resetGameData() {
+            if (confirm('Are you sure you want to reset all game data? This cannot be undone!')) {
+                localStorage.removeItem('numberGuesserData');
+                location.reload();
+            }
+        }
+
+        // Logout
+        function logout() {
+            currentUser = null;
+            checkAuthState();
+            showNotification('Logged out successfully');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            // Set color based on type
+            if (type === 'error') {
+                notification.style.backgroundColor = 'var(--error-color)';
+            } else if (type === 'warning') {
+                notification.style.backgroundColor = 'var(--warning-color)';
+            } else {
+                notification.style.backgroundColor = 'var(--success-color)';
+            }
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Update UI
+        function updateUI() {
+            updateGameUI();
+            updateStats();
+            
+            // Update theme
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeSelect.value = 'dark';
+            } else {
+                document.body.classList.remove('dark-mode');
+                themeSelect.value = 'light';
+            }
+            
+            // Update sound settings
+            soundToggle.checked = soundsEnabled;
+            volumeSlider.value = volume * 100;
+            
+            // Update sound selects
+            document.querySelectorAll('.sound-select').forEach(select => {
+                const type = select.dataset.type;
+                select.value = selectedSounds[type];
+            });
+        }
+
+        // Initialize the game
+        init();
+    </script>
+</body>
+</html>
